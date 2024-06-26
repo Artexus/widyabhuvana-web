@@ -32,28 +32,13 @@
     </div>
 </template>
 
-<script>
-    export default {
-    data() {
-        return {
-        username: '',
-        password: '',
-        error: null,
-        }
-    },
-    methods: {
-        async login() {
-            console.log(berhasil);
-        //   try {
-        //     await this.$store.dispatch('login', {
-        //       username: this.username,
-        //       password: this.password,
-        //     })
-        //     this.$router.push('/')
-        //   } catch (error) {
-        //     this.error = error.message
-        //   }
-        },
-    },
-  }
+<script setup>
+const user = ref({
+  username: '',
+  password: '',
+});
+
+const login = async () => {
+  // TODO send user Data to the login endpoint and redirect if  successful 
+};
 </script>
