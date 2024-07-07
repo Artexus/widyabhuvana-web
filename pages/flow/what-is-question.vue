@@ -4,7 +4,7 @@
     <div class="container mx-auto px-4 py-20 grid content-center">
         
         <div class="flex justify-between place-content-evenly">
-            <NuxtLink to="/">
+            <NuxtLink to="/flow/section-sub-header">
                 <img src="/img/svg/arrow_left_alt.svg" alt="">
             </NuxtLink>
             <div class="flex flex-col items-center">
@@ -52,6 +52,14 @@
             </div>
         </div>
 
+        
+        <NuxtLink to="/flow/what-is-match">
+            <div class="flex flex-row-reverse">
+                <button class="bg-amber-500 mt-4 rounded-lg h-10 w-40 xs:w-full flex items-center justify-center text-white">
+                    Selanjutnya!
+                </button>
+            </div>
+        </NuxtLink>
         
     </div>
     <NavBottom />

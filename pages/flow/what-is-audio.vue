@@ -4,7 +4,7 @@
     <div class="container mx-auto px-4 py-20 grid content-center">
         
         <div class="flex justify-between place-content-evenly">
-            <NuxtLink to="/">
+            <NuxtLink to="/flow/section-sub-header">
                 <img src="/img/svg/arrow_left_alt.svg" alt="">
             </NuxtLink>
             <div class="flex flex-col items-center">

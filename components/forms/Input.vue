@@ -1,21 +1,6 @@
-<template>
-    <div class="form-group grid gap-1">
-      <label :for="id" class="font-semibold">
-        {{ label }}
-      </label>
-      <input
-        :type="type"
-        :placeholder="placeholder"
-        :class="inputClass"
-        :id="id"
-        class="block bg-white w-full rounded-xl p-4"
-      />
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    props: {
+<script setup>
+  const text = defineModel('text')
+  defineProps({
       label: {
         type: String,
         required: true
@@ -36,7 +21,26 @@
         type: String,
         required: true
       }
-    }
-  }
-  </script>
+    })
+</script>
+
+<template>
+    <div class="form-group grid gap-1">
+      <label :for="id" class="font-semibold">
+        {{ label }}
+      </label>
+      <input
+        :type="type"
+        :placeholder="placeholder"
+        :class="inputClass"
+        :id="id"
+        v-model="text"
+        class="block bg-white w-full rounded-xl p-4"
+        required
+      />
+    </div>
+  </template>
+  
+
+
   
