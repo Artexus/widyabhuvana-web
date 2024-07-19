@@ -1,6 +1,7 @@
 // Import the Firebase SDK
 import {initializeApp} from '@firebase/app';
 import {createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword} from '@firebase/auth';
+import {getFirestore} from '@firebase/firestore'; // Import Firestore
 
 // Initialize Firebase with your project's configuration
 const firebaseConfig = {
@@ -19,9 +20,13 @@ const app = initializeApp(firebaseConfig);
 // Get the Firebase Authentication object
 const auth = getAuth(app);
 
-// Export the auth object for use in other components
+// Get a reference to the Firestore database
+const db = getFirestore(app); // Initialize Firestore
+
+// Export the auth object and Firestore for use in other components
 export const useFirebase = () => ({
     auth,
     createUserWithEmailAndPassword, // Export the function
     signInWithEmailAndPassword,
+    db // Export the Firestore instance
 });

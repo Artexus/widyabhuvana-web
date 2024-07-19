@@ -11,6 +11,15 @@
       <form @submit.prevent="register">
         <div class="grid gap-6 mt-4">
           <FormsInput
+              id="nama"
+              v-model="name"
+              label="Nama"
+              placeholder="Tuliskan Nama"
+              type="text"
+              @input="updateName"
+          />
+
+          <FormsInput
               id="surat-elektronik"
               v-model="email"
               label="Surat Elektronik"
@@ -36,6 +45,24 @@
               type="password"
               @input="updateRepeatPassword"
           />
+
+          <FormsInput
+              id="tempat-lahir"
+              v-model="placeOfBirth"
+              label="Tempat Lahir"
+              placeholder="Tuliskan Tempat Lahir"
+              type="text"
+              @input="updatePlaceOfBirth"
+          />
+
+          <FormsInput
+              id="tanggal-lahir"
+              v-model="dateOfBirth"
+              label="Tanggal Lahir"
+              placeholder="Tuliskan Tanggal Lahir"
+              type="date"
+              @input="updateDateOfBirth"
+          />
         </div>
         <button :disabled="isLoading"
                 class="text-white block w-full text-center font-semibold p-4 bg-primaryBlue rounded-xl text-xl mt-4"
@@ -51,13 +78,17 @@
 import {ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useFirebase} from '../composables/firebase';
+import {doc, getDoc, setDoc, Timestamp} from "firebase/firestore";
 
 const router = useRouter();
-const {auth, createUserWithEmailAndPassword} = useFirebase();
+const {auth, createUserWithEmailAndPassword, db} = useFirebase();
 
 const email = ref('');
 const password = ref('');
 const cPassword = ref('');
+const name = ref(''); // New ref for user name
+const placeOfBirth = ref(''); // New ref for place of birth
+const dateOfBirth = ref(''); // New ref for date of birth
 const error = ref(null);
 const isLoading = ref(false);
 
@@ -73,6 +104,18 @@ const updateRepeatPassword = (event) => {
   cPassword.value = event.target.value;
 };
 
+const updateName = (event) => {
+  name.value = event.target.value;
+};
+
+const updatePlaceOfBirth = (event) => {
+  placeOfBirth.value = event.target.value;
+};
+
+const updateDateOfBirth = (event) => {
+  dateOfBirth.value = event.target.value;
+};
+
 const register = async () => {
   try {
     isLoading.value = true;
@@ -82,17 +125,52 @@ const register = async () => {
       return;
     }
 
-    // Use the imported function
     const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
-    const user = userCredential.user; // Get the user object
 
-    // Redirect to dashboard after registration
-    await router.push('/dashboard');
+    // Check if the user is already signed in
+    // if (auth.currentUser) {
+    //   console.log("User is already signed in.");
+    //   return;
+    // }
+
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        console.log("User is fully authenticated");
+
+        const userRef = doc(db, "users", user.uid);
+        const userData = {
+          email: user.email,
+          name: name.value,
+          placeOfBirth: placeOfBirth.value,
+          dateOfBirth: dateOfBirth.value,
+          createdDate: Timestamp.now(),
+          updatedDate: Timestamp.now(),
+          commentID: [],
+          userUID: user.uid
+        };
+
+        try {
+          await setDoc(userRef, userData);
+          const docSnapshot = await getDoc(userRef);
+          if (docSnapshot.exists()) {
+            console.log("User data saved in database successfully!");
+            await router.push('/dashboard');
+          } else {
+            console.error("Error: User data not found in Firestore");
+            // Handle the error appropriately
+          }
+        } catch (error) {
+          console.error("Error saving user data:", error);
+          // Handle the error appropriately
+        }
+      } else {
+        console.log("User is not authenticated");
+      }
+    });
+
   } catch (error) {
     // Handle specific Firebase errors
-
     console.error('Registration error:', error);
-
     console.error('Registration error code:', error.code);
 
     if (error.code === 'auth/weak-password') {
@@ -102,7 +180,6 @@ const register = async () => {
     } else if (error.code === 'auth/email-already-in-use') {
       error.value = "Email ini sudah digunakan. Silakan gunakan email yang berbeda.";
     } else {
-      // Default error message for other cases
       error.value = "Terjadi kesalahan saat mendaftar. Silakan coba lagi nanti.";
     }
   } finally {
