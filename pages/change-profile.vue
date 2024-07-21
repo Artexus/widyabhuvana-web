@@ -166,6 +166,10 @@ const toggleEdit = () => {
 
     if (Object.keys(errors.value).length > 0) {
       isEditing.value = true;
+    } else {
+      // Jika tidak ada error, lakukan update password dan data
+      updatePasswordInAuth();
+      updateDataInFirestore();
     }
   }
 
@@ -282,11 +286,11 @@ const updatePasswordInAuth = async () => {
 
 const updateDataInFirestore = async () => {
   const db = getFirestore();
-  const userDocRef = doc(db, 'users', user.uid);
+  const userDocRef = doc(db, 'users', parsedUserData.uid);
 
   try {
     await updateDoc(userDocRef, {
-      fullName: form.value.fullName,
+      name: form.value.fullName,
       email: form.value.email,
       birthPlace: form.value.birthPlace,
       birthDate: form.value.birthDate,
