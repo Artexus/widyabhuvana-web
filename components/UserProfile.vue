@@ -1,6 +1,6 @@
 <template>
   <div class="profile-container bg-d3e3fb rounded-2xl shadow-lg p-6 flex items-center">
-    <img :src="resolvedImg" alt="Profile Picture" class="rounded-full mr-4" width="120" height="120">
+    <img :src="img" alt="Profile Picture" class="rounded-full mr-4" height="120" width="120">
     <div class="text-left">
       <h2 class="text-2xl font-bold mb-2" style="max-width: 200px;">{{ name }}</h2>
       <p class="text-gray-600 mb-2" style="max-width: 200px;">Total Poin: {{ points }}</p>

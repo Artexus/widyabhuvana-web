@@ -4,6 +4,7 @@
       <h2>Upload Gambar</h2>
       <input type="file" accept=".jpg" @change="onFileSelected" ref="fileInput">
       <button @click="closePopup">Tutup</button>
+      <button @click="uploadImage">Upload</button>
     </div>
   </div>
 </template>
@@ -25,6 +26,10 @@ export default {
       console.log('File yang dipilih di UploadImagePopup: ', file)
       // Lakukan sesuatu dengan file yang dipilih (misalnya, upload)
       // console.log('File yang dipilih:', file);
+    },
+    uploadImage() {
+      this.$emit('upload', this.$refs.fileInput.files[0]); // Emit the selected file
+      this.closePopup();
     }
   }
 };

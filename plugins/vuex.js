@@ -50,9 +50,33 @@ const store = createStore({
     },
     getters: {
         // You can add getters if needed to derive data from userData
+        getUserCreatedDate(state) {
+            return state.userData ? state.userData.createdDate : null;
+        },
+        getUserDOB(state) {
+            return state.userData ? state.userData.dateOfBirth : null;
+        },
+        getUserDisplayPicture(state) {
+            return state.userData ? state.userData.displayPicture : null;
+        },
+        getUserEmail(state) {
+            return state.userData ? state.userData.email : null;
+        },
         getUserName(state) {
             return state.userData ? state.userData.name : null;
-        }
+        },
+        getUserPlaceOfBirth(state) {
+            return state.userData ? state.userData.placeOfBirth : null;
+        },
+        getUserTotalPoint(state) {
+            return state.userData ? state.userData.totalPoint : null;
+        },
+        getUserUpdatedDate(state) {
+            return state.userData ? state.userData.updatedDate : null;
+        },
+        getUserUID(state) {
+            return state.userData ? state.userData.userUID : null;
+        },
     },
 });
 

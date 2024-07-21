@@ -164,7 +164,9 @@ const register = async () => {
           createdDate: Timestamp.now(),
           updatedDate: Timestamp.now(),
           commentID: [],
-          userUID: user.uid
+          userUID: user.uid,
+          totalPoint: 0,
+          displayPicture: ''
         };
 
         try {

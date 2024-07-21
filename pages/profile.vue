@@ -2,9 +2,9 @@
   <div>
     <div class="container mx-auto px-4 py-20 relative">
       <UserProfile
-          name="Suci Lestari"
-          img="display_picture.png"
-          :points="120"
+          :img="base64Image"
+          :name="userName"
+          :points="totalPoint"
           :pageType="'edit'"
           class="floating-profile"
           @click="navigateToChangeProfile"
@@ -37,55 +37,79 @@
       <ProgressBelajar style="margin-top: 10px;"/>
 
       <!-- NavBottom Component -->
-      <NavBottom class="z-10"/>
+      <NavBottom class="z-10" @showHelp="showHelp" @showSetting="showSetting"/>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
 import UserProfile from '@/components/UserProfile.vue';
 import ProgressBelajar from '../components/ProgressBelajar.vue';
 import NavBottom from '@/components/NavBottom.vue';
+import {useStore} from 'vuex';
+import {onMounted, ref} from 'vue';
+import {useRouter} from 'vue-router';
 
-export default {
-  components: {
-    ProgressBelajar,
-    UserProfile,
-    NavBottom,
-  },
-  data() {
-    return {
-      form: {
-        fullName: '',
-        password: '',
-        email: '',
-        birthPlace: '',
-        birthDate: '',
-      },
-      formattedBirthDate: '',
-    };
-  },
-  methods: {
-    formatBirthDate() {
-      const options = {year: 'numeric', month: 'long', day: 'numeric'};
-      this.formattedBirthDate = new Date(this.form.birthDate).toLocaleDateString(
-          'id-ID',
-          options
-      );
-    },
-    navigateToChangeProfile() {
-      this.$router.push('/change-profile');
-    },
-    showHelp() {
-      console.log('Help icon clicked!');
-      // Here, add your logic for showing the help dialog or content
-    },
-    showSetting() {
-      console.log('Setting icon clicked!');
-      // Add your logic for showing the settings dialog or content
-    },
-  },
+const store = useStore();
+const userName = ref('');
+const formattedBirthDate = ref('');
+const router = useRouter();
+
+const totalPoint = ref('');
+const base64Image = ref(''); // Deklarasi base64Image
+
+let parsedUserData;
+
+const formatBirthDate = () => {
+  const options = {year: 'numeric', month: 'long', day: 'numeric'};
+  formattedBirthDate.value = new Date(form.birthDate).toLocaleDateString(
+      'id-ID',
+      options
+  );
 };
+
+const navigateToChangeProfile = () => {
+  router.push('/change-profile');
+};
+
+const showHelp = () => {
+  console.log('Help icon clicked!');
+  // Here, add your logic for showing the help dialog or content
+};
+
+const showSetting = () => {
+  console.log('Setting icon clicked!');
+  // Add your logic for showing the settings dialog or content
+};
+
+onMounted(async () => {
+  const userData = localStorage.getItem('userData');
+
+  if (userData) {
+    const parsedUserData = JSON.parse(userData);
+
+    // Fetch user data and store it in Vuex
+    await store.dispatch('fetchUserData', parsedUserData.uid);
+    userName.value = store.state.userData.name;
+    totalPoint.value = store.state.userData.totalPoint;
+
+    // Mengambil gambar base64 dari Vuex
+    const fetchedBase64Image = store.state.userData.displayPicture;
+
+    console.log("isi base64Image : " + fetchedBase64Image);
+
+    if (fetchedBase64Image) {
+      // Set base64 image directly
+      base64Image.value = fetchedBase64Image; // Set nilai ke base64Image
+    } else {
+      // Handle error, e.g., set a default image
+      base64Image.value = 'default_image.png'; // Ganti dengan gambar default Anda
+    }
+  } else {
+    console.log("User data not found in localStorage");
+  }
+});
+
 </script>
 
 <style scoped>

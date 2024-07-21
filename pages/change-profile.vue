@@ -2,9 +2,9 @@
   <div>
     <div class="container mx-auto px-4 py-20 relative">
       <UserProfile
-          name="Suci Lestari"
-          img="display_picture.png"
-          :points="120"
+          :img="base64Image"
+          :name="form.fullName"
+          :points="totalPoint"
           :pageType="'change'"
           :isEditing="isEditing"
           class="floating-profile"
@@ -13,8 +13,8 @@
 
       <div class="icon-container">
         <img src="../assets/icon/ic_arrow_left_alt.png" @click="goBack" alt="Back Icon" width="24" height="24">
-        <img src="../assets/icon/ic_upload_photo.png" @click="handleUpload" alt="Upload Image Icon" width="24"
-             height="24">
+        <img alt="Upload Image Icon" height="24" src="../assets/icon/ic_upload_photo.png" width="24"
+             @click="handleUpload">
       </div>
     </div>
     <div class="form-container mx-auto px-4 py-8 mb-8">
@@ -58,7 +58,7 @@
             v-model="form.email"
             class="form-input"
             placeholder="Masukkan email"
-            :disabled="!isEditing"
+            :disabled="true"
             ref="email"
             :class="{ 'is-invalid': errors.email }"
         >
@@ -99,113 +99,245 @@
         </div>
       </div>
 
-      <UploadImagePopup v-model="showPopup" @close="showPopup = false"/>
+      <LoadingOverlay v-if="showLoading" :showLoading="showLoading"/>
+
+      <UploadImagePopup v-model="showPopup" @upload="handleUpload"/>
     </div>
 
     <NavBottom class="z-10"/>
   </div>
 </template>
 
-<script>
+<script setup>
 import UserProfile from '@/components/UserProfile.vue';
 import NavBottom from '@/components/NavBottom.vue';
 import UploadImagePopup from '@/components/dialog/UploadImagePopup.vue';
+import LoadingOverlay from '../components/showLoading.vue'; // Import LoadingOverlay component
+import {nextTick, onMounted, ref} from 'vue';
+import {useRouter} from 'vue-router';
+import {getAuth, updatePassword} from 'firebase/auth';
+import {doc, getDoc, getFirestore, updateDoc} from 'firebase/firestore';
+import {useStore} from 'vuex';
+import {useFirebase} from "../composables/firebase.js";
 
-export default {
-  components: {
-    UserProfile,
-    NavBottom,
-    UploadImagePopup,
-  },
-  data() {
-    return {
-      form: {
-        fullName: '',
-        password: '',
-        email: '',
-        birthPlace: '',
-        birthDate: ''
-      },
-      formattedBirthDate: '',
-      isEditing: false, //  State untuk mode edit
-      showPopup: false,
-      errors: {}, // Object untuk menyimpan error
-    };
-  },
-  mounted() {
-    // Simulasikan mengambil data profil dari backend
-    // (Ganti contoh data ini dengan data yang Anda fetched dari backend)
-    this.form = {
-      fullName: 'Suci Lestari',
-      password: '********',
-      email: 'suci.lestari@example.com',
-      birthPlace: 'Jakarta',
-      birthDate: '2000-01-01'
-    };
-    this.formatBirthDate();
-  },
-  methods: {
-    formatBirthDate() {
-      const options = {year: 'numeric', month: 'long', day: 'numeric'};
-      this.formattedBirthDate = new Date(this.form.birthDate).toLocaleDateString('id-ID', options);
-    },
-    toggleEdit() {
-      this.errors = {}; // Reset error messages
+const {auth, db} = useFirebase();
 
-      this.isEditing = !this.isEditing;
+const router = useRouter();
+const form = ref({
+  fullName: '',
+  password: '',
+  email: '',
+  birthPlace: '',
+  birthDate: ''
+});
+const formattedBirthDate = ref('');
+const isEditing = ref(false);
+const showPopup = ref(false);
+const errors = ref({});
+const store = useStore();
+const showLoading = ref(false); // Add showLoading ref
 
-      if (!this.isEditing) {
-        this.validateForm();
+let parsedUserData;
 
-        if (Object.keys(this.errors).length > 0) {
-          this.isEditing = true;
-        }
-      }
+const userName = ref(''); // Create a ref to store the user's name
+const userPassword = ref('');
+const userEmail = ref('');
+const userTempatLahir = ref('');
+const userDOB = ref('');
+const totalPoint = ref('');
 
-      this.$nextTick(() => {
-        this.$refs.fullName.disabled = !this.isEditing;
-        this.$refs.password.disabled = !this.isEditing;
-        this.$refs.email.disabled = !this.isEditing;
-        this.$refs.birthPlace.disabled = !this.isEditing;
-        this.$refs.birthDate.disabled = !this.isEditing;
-      });
-    },
-    goBack() {
-      // Logic untuk kembali ke halaman sebelumnya
-      this.$router.go(-1); // Gunakan $router.go untuk kembali ke halaman sebelumnya
-    },
-    handleUpload() {
-      // Logic untuk menangani upload gambar
-      this.showPopup = true;
-      // Implementasikan logika Anda untuk upload gambar di sini
-    },
-    validateForm() {
-      this.errors = {};
+const base64Image = ref('');
 
-      if (!this.form.fullName) {
-        this.errors.fullName = 'Nama lengkap harus diisi';
-      }
+const formatBirthDate = () => {
+  const options = {year: 'numeric', month: 'long', day: 'numeric'};
+  formattedBirthDate.value = new Date(form.value.birthDate).toLocaleDateString(
+      'id-ID',
+      options
+  );
+};
 
-      if (!this.form.password) {
-        this.errors.password = 'Kata sandi harus diisi';
-      }
+const toggleEdit = () => {
+  errors.value = {}; // Reset error messages
 
-      if (!this.form.email) {
-        this.errors.email = 'Email harus diisi';
-      } else if (!/\S+@\S+\.\S+/.test(this.form.email)) {
-        this.errors.email = 'Email tidak valid';
-      }
+  isEditing.value = !isEditing.value;
 
-      if (!this.form.birthPlace) {
-        this.errors.birthPlace = 'Tempat lahir harus diisi';
-      }
+  if (!isEditing.value) {
+    validateForm();
 
-      if (!this.form.birthDate) {
-        this.errors.birthDate = 'Tanggal lahir harus diisi';
-      }
+    if (Object.keys(errors.value).length > 0) {
+      isEditing.value = true;
     }
   }
-}
+
+  nextTick(() => {
+    fullNameRef.value.disabled = !isEditing.value;
+    passwordRef.value.disabled = !isEditing.value;
+    // emailRef.value.disabled = !isEditing.value;
+    birthPlaceRef.value.disabled = !isEditing.value;
+    birthDateRef.value.disabled = !isEditing.value;
+  });
+};
+
+const goBack = () => {
+  router.go(-1); // Gunakan $router.go untuk kembali ke halaman sebelumnya
+};
+
+const showUploadPopup = () => {
+  showPopup.value = true;
+};
+
+const handleUpload = async (file) => {
+  showPopup.value = true;
+
+  console.log("Masuk ke function handleUpload");
+
+  if (file) {
+    try {
+      console.log("Masuk ke function handleUpload - try section");
+
+      // Show the loading indicator
+      showLoading.value = true;
+
+      // Convert the image to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+
+      reader.onload = async (e) => {
+        const base64Image = e.target.result;
+
+        // Update the user's document in Firestore
+        const userDocRef = doc(db, 'users', parsedUserData.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        // Update the displayPicture field with the base64 data
+        await updateDoc(userDocRef, {
+          displayPicture: base64Image,
+        });
+
+        console.log('Image uploaded and user document updated successfully!');
+
+        // Update the displayPicture in Vuex
+        // store.commit('updateDisplayPicture', base64Image);
+
+        // Hide the loading indicator
+        showLoading.value = false;
+
+        // Close the popup or perform other actions
+        showPopup.value = false;
+      };
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      // Handle the error, for example, display an error message to the user
+      // Hide the loading indicator
+      showLoading.value = false;
+    }
+  } else {
+    console.error('No file selected.');
+    // Handle the case where no file is selected
+  }
+};
+
+const validateForm = () => {
+  errors.value = {};
+
+  if (!form.value.fullName) {
+    errors.value.fullName = 'Nama lengkap harus diisi';
+  }
+
+  // if (!form.value.password) {
+  //   errors.value.password = 'Kata sandi harus diisi';
+  // }
+
+  if (!form.value.email) {
+    errors.value.email = 'Email harus diisi';
+  } else if (!/\S+@\S+\.\S+/.test(form.value.email)) {
+    errors.value.email = 'Email tidak valid';
+  }
+
+  if (!form.value.birthPlace) {
+    errors.value.birthPlace = 'Tempat lahir harus diisi';
+  }
+
+  if (!form.value.birthDate) {
+    errors.value.birthDate = 'Tanggal lahir harus diisi';
+  }
+};
+
+
+const updatePasswordInAuth = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (user) {
+    try {
+      await updatePassword(user, form.value.password);
+      console.log('Password updated successfully!');
+    } catch (error) {
+      console.error('Failed to update password:', error);
+    }
+  } else {
+    console.error('No user signed in.');
+  }
+};
+
+const updateDataInFirestore = async () => {
+  const db = getFirestore();
+  const userDocRef = doc(db, 'users', user.uid);
+
+  try {
+    await updateDoc(userDocRef, {
+      fullName: form.value.fullName,
+      email: form.value.email,
+      birthPlace: form.value.birthPlace,
+      birthDate: form.value.birthDate,
+    });
+    console.log('User data updated successfully!');
+  } catch (error) {
+    console.error('Failed to update user data:', error);
+  }
+};
+
+onMounted(async () => {
+  const userData = localStorage.getItem('userData');
+
+  if (userData) {
+    parsedUserData = JSON.parse(userData);
+
+    // Fetch user data and store it in Vuex
+    await store.dispatch('fetchUserData', parsedUserData.uid);
+
+    // Now you can use parsedUserData.name
+    form.value.fullName = store.state.userData.name;
+    form.value.password = store.state.userData.password;
+    form.value.email = store.state.userData.email;
+    form.value.birthPlace = store.state.userData.placeOfBirth;
+    form.value.birthDate = store.state.userData.dateOfBirth;
+    totalPoint.value = store.state.userData.totalPoint;
+    formatBirthDate();
+
+    const fetchedBase64Image = store.state.userData.displayPicture;
+
+    console.log("isi base64Image : " + fetchedBase64Image);
+
+    if (fetchedBase64Image) {
+      // Set base64 image directly
+      base64Image.value = fetchedBase64Image; // Set nilai ke base64Image
+    } else {
+      // Handle error, e.g., set a default image
+      base64Image.value = 'default_image.png'; // Ganti dengan gambar default Anda
+    }
+  } else {
+    // Handle the case where userData is not found
+    console.log("User data not found in localStorage");
+  }
+});
+
+const fullNameRef = ref(null);
+const passwordRef = ref(null);
+const emailRef = ref(null);
+const birthPlaceRef = ref(null);
+const birthDateRef = ref(null);
+
 </script>
 
 <style scoped>
@@ -283,7 +415,7 @@ export default {
 
 .icon-container {
   position: absolute;
-  top: 10px;
+  top: 30px;
   display: flex;
   justify-content: space-between;
   width: 100%;
