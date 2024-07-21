@@ -1,16 +1,16 @@
-import type { NuxtPage } from 'nuxt/schema'
+import {defineNuxtConfig} from 'nuxt/config'
 
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: {enabled: true},
   modules: ["@nuxtjs/tailwindcss", "@sidebase/nuxt-auth"],
-  auth: {    baseURL: 'https://deaf-kata-kiseky-916fbebf.koyeb.app/v1/login',   
-    override:true, 
-    provider: {      
+  auth: {
+    baseURL: 'https://deaf-kata-kiseky-916fbebf.koyeb.app/v1/login',
+    override: true,
+    provider: {
       type: 'local',
-      endpoints: {       
-        getSession: false      
-      }    
-    } 
-  }
-  
+      endpoints: {
+        getSession: false
+      }
+    }
+  },
 })

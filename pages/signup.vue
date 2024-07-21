@@ -79,9 +79,11 @@ import {ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useFirebase} from '../composables/firebase';
 import {doc, getDoc, setDoc, Timestamp} from "firebase/firestore";
+import {useStore} from 'vuex';
 
 const router = useRouter();
 const {auth, createUserWithEmailAndPassword, db} = useFirebase();
+const store = useStore(); // Get the Vuex store instance
 
 const email = ref('');
 const password = ref('');
@@ -154,6 +156,10 @@ const register = async () => {
           const docSnapshot = await getDoc(userRef);
           if (docSnapshot.exists()) {
             console.log("User data saved in database successfully!");
+
+            // Fetch and store user data in Vuex
+            await store.dispatch('fetchUserData', user.uid);
+
             await router.push('/dashboard');
           } else {
             console.error("Error: User data not found in Firestore");
