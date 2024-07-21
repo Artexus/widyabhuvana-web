@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useFirebase} from '../composables/firebase';
 import {doc, getDoc, setDoc, Timestamp} from "firebase/firestore";
@@ -118,6 +118,28 @@ const updateDateOfBirth = (event) => {
   dateOfBirth.value = event.target.value;
 };
 
+onMounted(() => {
+  // console.log("Lihat store : " + store.state.count);
+
+  console.log("Lihat auth : ");
+  console.dir(auth);
+
+  // console.log("Lihat auth current user : " + auth.currentUser.email);
+
+  auth.onAuthStateChanged((firebaseUser) => {
+    if (firebaseUser) {
+      console.log("isi firebaseUser");
+      console.dir(firebaseUser);
+
+      alert("User is signed in as " + firebaseUser.email);
+
+      localStorage.setItem('userData', JSON.stringify(firebaseUser));
+
+      router.push({name: 'dashboard', replace: true});
+    }
+  });
+});
+
 const register = async () => {
   try {
     isLoading.value = true;
@@ -128,12 +150,6 @@ const register = async () => {
     }
 
     const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
-
-    // Check if the user is already signed in
-    // if (auth.currentUser) {
-    //   console.log("User is already signed in.");
-    //   return;
-    // }
 
     auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -157,8 +173,7 @@ const register = async () => {
           if (docSnapshot.exists()) {
             console.log("User data saved in database successfully!");
 
-            // Fetch and store user data in Vuex
-            await store.dispatch('fetchUserData', user.uid);
+            localStorage.setItem('userData', JSON.stringify(user));
 
             await router.push('/dashboard');
           } else {

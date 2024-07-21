@@ -50,11 +50,25 @@ const store = useStore();
 
 // Reset auth.currentUser on page load (for development)
 onMounted(() => {
-  auth.currentUser = null;
+  // console.log("Lihat store : " + store.state.count);
 
-  console.log("Test");
+  console.log("Lihat auth : ");
+  console.dir(auth);
 
-  console.log("Lihat store : " + store.state.count);
+  // console.log("Lihat auth current user : " + auth.currentUser.email);
+
+  auth.onAuthStateChanged((firebaseUser) => {
+    if (firebaseUser) {
+      console.log("isi firebaseUser");
+      console.dir(firebaseUser);
+
+      alert("User is signed in as " + firebaseUser.email);
+
+      localStorage.setItem('userData', JSON.stringify(firebaseUser));
+
+      router.push({name: 'dashboard', replace: true});
+    }
+  });
 });
 
 const updateEmail = (event) => {
@@ -74,9 +88,16 @@ const login = async () => {
       console.log("Isi user UID : " + user.uid);
 
       // Fetch user data and store it in Vuex
-      await store.dispatch('fetchUserData', user.uid); // Call the fetchUserData action
+      // await store.dispatch('fetchUserData', user.uid); // Call the fetchUserData action
 
-      router.push('/dashboard');
+      auth.onAuthStateChanged((firebaseUser) => {
+        if (firebaseUser) {
+
+          localStorage.setItem('userData', JSON.stringify(firebaseUser));
+
+          router.push('/dashboard');
+        }
+      });
     } else {
       // Handle case where authentication failed
       error.value = "Terjadi kesalahan saat masuk. Silakan coba lagi nanti.";

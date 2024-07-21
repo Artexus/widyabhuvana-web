@@ -25,6 +25,7 @@ export const db = getFirestore(app); // Initialize Firestore
 
 // Export the auth object and Firestore for use in other components
 export const useFirebase = () => ({
+    app,
     auth,
     createUserWithEmailAndPassword, // Export the function
     signInWithEmailAndPassword,

@@ -14,6 +14,10 @@ const store = createStore({
         setUserData(state, data) {
             state.userData = data;
         },
+        // Add a mutation to clear user data
+        clearUserData(state) {
+            state.userData = null;
+        },
     },
     actions: {
         async fetchUserData(context, userId) {
@@ -36,6 +40,13 @@ const store = createStore({
                 // You might want to dispatch an error action here
             }
         },
+        // Add a logout action
+        logout(context) {
+            console.log("Masuk function logout di store ga sih ??");
+
+            // Clear user data in the store
+            context.commit('clearUserData');
+        }
     },
     getters: {
         // You can add getters if needed to derive data from userData
