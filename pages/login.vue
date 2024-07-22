@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from 'vue';
+import {onMounted, onUnmounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useFirebase} from '../composables/firebase';
 import {useStore} from 'vuex';
@@ -48,6 +48,8 @@ const error = ref(null);
 
 const store = useStore();
 
+let unsubscribe;
+
 // Reset auth.currentUser on page load (for development)
 onMounted(() => {
   // console.log("Lihat store : " + store.state.count);
@@ -57,7 +59,7 @@ onMounted(() => {
 
   // console.log("Lihat auth current user : " + auth.currentUser.email);
 
-  auth.onAuthStateChanged((firebaseUser) => {
+  unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
     if (firebaseUser) {
       console.log("isi firebaseUser");
       console.dir(firebaseUser);
@@ -69,6 +71,13 @@ onMounted(() => {
       router.push({name: 'dashboard', replace: true});
     }
   });
+});
+
+// Menghentikan pemantauan saat komponen di-unmount
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe(); // Panggil fungsi pembatalan
+  }
 });
 
 const updateEmail = (event) => {

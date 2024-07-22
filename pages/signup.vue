@@ -94,6 +94,8 @@ const dateOfBirth = ref(''); // New ref for date of birth
 const error = ref(null);
 const isLoading = ref(false);
 
+let unsubscribe;
+
 const updateEmail = (event) => {
   email.value = event.target.value;
 };
@@ -126,7 +128,7 @@ onMounted(() => {
 
   // console.log("Lihat auth current user : " + auth.currentUser.email);
 
-  auth.onAuthStateChanged((firebaseUser) => {
+  unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
     if (firebaseUser) {
       console.log("isi firebaseUser");
       console.dir(firebaseUser);
@@ -138,6 +140,13 @@ onMounted(() => {
       router.push({name: 'dashboard', replace: true});
     }
   });
+});
+
+// Menghentikan pemantauan saat komponen di-unmount
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe(); // Panggil fungsi pembatalan
+  }
 });
 
 const register = async () => {
